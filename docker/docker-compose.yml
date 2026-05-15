@@ -163,6 +163,7 @@ services:
       - "16030:16030"   # HBase RegionServer Web UI
       - "2182:2181"     # ZooKeeper HBase (port différent pour éviter conflit)
       - "8086:8085"     # HBase REST API (désactivé si conflit avec kafka-ui)
+      - "9090:9090"     # HBase Thrift Server
     volumes:
       - hbase_data:/data
     environment:
