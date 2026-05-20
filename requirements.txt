@@ -1,6 +1,6 @@
 # ============================================================
-# Watt-SN — Dépendances Python
-# Versions alignées sur les exigences du prof
+# Watt-SN — Dépendances Python (scripts locaux uniquement)
+# Airflow et MLflow tournent dans Docker — pas besoin ici
 # Équipe 06 | Master 2 DSGL | UADB Bambey 2025-2026
 # ============================================================
 
@@ -18,10 +18,6 @@ scipy==1.11.4
 
 # Machine Learning
 scikit-learn==1.4.2
-mlflow==2.8.1
-
-# Orchestration
-apache-airflow==2.7.3
 
 # Visualisation
 matplotlib==3.7.3
