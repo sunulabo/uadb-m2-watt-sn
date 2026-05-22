@@ -1,0 +1,30 @@
+# ============================================================
+# Watt-SN — Dépendances Python (scripts locaux uniquement)
+# Airflow et MLflow tournent dans Docker — pas besoin ici
+# Équipe 06 | Master 2 DSGL | UADB Bambey 2025-2026
+# ============================================================
+
+# Big Data & Streaming
+pyspark==3.3.2
+kafka-python==2.0.2
+happybase==1.2.0
+pyhive==0.7.0
+
+# Data Processing & Validation
+pandas==2.0.3
+numpy==1.24.4
+pandera==0.17.2
+scipy==1.11.4
+
+# Machine Learning
+scikit-learn==1.4.2
+
+# Visualisation
+matplotlib==3.7.3
+seaborn==0.12.2
+
+# Data Generation
+faker==30.1.0
+
+# Utilities
+python-dotenv==1.0.0
