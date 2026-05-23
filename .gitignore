@@ -7,3 +7,4 @@ data/raw/
 models/*.pkl
 .DS_Store
 .venv/
+.vscode/
