@@ -2,9 +2,11 @@ __pycache__/
 *.pyc
 *.env
 .env
+wattsn_env/
 *.log
 data/raw/
 models/*.pkl
 .DS_Store
 .venv/
 .vscode/
+setup.sh
