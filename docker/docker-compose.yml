@@ -223,7 +223,7 @@ services:
   # 9. HIVE METASTORE DB — Base PostgreSQL pour Hive
   # ─────────────────────────────────────────────────────────
   hive-metastore-db:
-    image: postgres:14-alpine
+    image: postgres:13-alpine
     container_name: watt_hive_metastore_db
     hostname: hive-metastore-db
     networks:
@@ -256,6 +256,8 @@ services:
       - "10002:10002"   # HiveServer2 Web UI
     environment:
       SERVICE_NAME: hiveserver2
+      SKIP_SCHEMA_INIT: "true"
+      IS_RESUME: "true"
       DB_DRIVER: postgres
       SERVICE_OPTS: >-
         -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
