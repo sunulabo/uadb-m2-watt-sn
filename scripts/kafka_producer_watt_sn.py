@@ -30,35 +30,12 @@ def gen_solaire(zone, heure):
             'heure':heure,'timestamp':datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
 
 if __name__ == '__main__':
-
     print('Simulateur Watt-SN démarré...')
-
     while True:
-
         h = datetime.utcnow().hour
-
         for zone in ZONES:
-
-            conso = gen_conso(zone, h)
-            solaire = gen_solaire(zone, h)
-
-            print("Envoi :", zone)
-
-            #producer.send('watt_conso_raw', conso)
-            # future = producer.send('watt_conso_raw', gen_conso(zone, h))
-            # print(future.get(timeout=10))
-            # producer.send('watt_solaire_raw', solaire)
-            future = producer.send('watt_conso_raw', gen_conso(zone, h))
-
-            metadata = future.get(timeout=10)
-
-            print(
-                    f"topic={metadata.topic}, "
-                    f"partition={metadata.partition}, "
-                    f"offset={metadata.offset}")
-        
+            producer.send('watt_conso_raw', gen_conso(zone, h))
+            producer.send('watt_solaire_raw', gen_solaire(zone, h))
         producer.flush()
-
-        print("Batch envoyé")
-
+        print(f"[{datetime.utcnow().strftime('%H:%M:%S')}] Batch envoyé — 7 zones")
         time.sleep(5)

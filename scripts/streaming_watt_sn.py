@@ -293,6 +293,8 @@ alertes_kafka = (
        ).alias("value")
    )
 )
+
+
 debug_query = (
    risque_df.writeStream
    .format("console")
@@ -373,9 +375,9 @@ q_solaire = (
 print("Pipeline Spark Streaming Watt-SN démarré...")
 
 
-q_alerts.awaitTermination()
-q_solaire.awaitTermination()
-q_debug_solaire.awaitTermination()
+# q_alerts.awaitTermination()
+# q_solaire.awaitTermination()
+# q_debug_solaire.awaitTermination()
 
 
-
+spark.streams.awaitAnyTermination()
