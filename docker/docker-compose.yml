@@ -184,6 +184,8 @@ services:
   # ─────────────────────────────────────────────────────────
   spark-master:
     image: apache/spark:3.5.1
+    volumes:
+    - ../scripts:/opt/spark/work-dir
     container_name: watt_spark_master
     hostname: spark-master
     networks:
@@ -205,6 +207,8 @@ services:
   # ─────────────────────────────────────────────────────────
   spark-worker:
     image: apache/spark:3.5.1
+    volumes:
+    - ../scripts:/opt/spark/work-dir
     container_name: watt_spark_worker
     hostname: spark-worker
     networks:
