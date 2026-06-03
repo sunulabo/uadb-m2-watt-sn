@@ -1,4 +1,4 @@
-# kafka_producer_watt.py — Simulateur consommation Senelec + production solaire
+# kafka_producer_watt_sn.py — Simulateur consommation Senelec + production solaire
 from kafka import KafkaProducer
 import json, random, time, uuid
 from datetime import datetime
