@@ -283,7 +283,7 @@ services:
   # 11. AIRFLOW DB — Base PostgreSQL pour Airflow
   # ─────────────────────────────────────────────────────────
   airflow-db:
-    image: postgres:14-alpine
+    image: postgres:13-alpine
     container_name: watt_airflow_db
     hostname: airflow-db
     networks:

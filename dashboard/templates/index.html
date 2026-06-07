@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Watt-SN Dashboard</title>
+
+<link
+rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}"
+>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<h1>⚡ Watt-SN</h1>
+
+<h2>Surveillance énergétique nationale</h2>
+
+</div>
+
+<div class="card">
+
+<h3>Alertes par zone</h3>
+
+<ul>
+{% for zone,val in zones.items() %}
+<li>{{ zone }} : {{ val }}</li>
+{% endfor %}
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3>Risques de délestage</h3>
+
+<ul>
+{% for risque,val in risques.items() %}
+<li>{{ risque }} : {{ val }}</li>
+{% endfor %}
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3>Recommandations</h3>
+
+<ul>
+{% for r in recommandations %}
+<li>{{ r }}</li>
+{% endfor %}
+</ul>
+
+</div>
+
+</body>
+</html>
