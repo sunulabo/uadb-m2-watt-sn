@@ -110,17 +110,21 @@ def dashboard():
     compteur_risques = Counter([a['niveau'] for a in alertes])
     recommandations  = generer_recommandations(alertes)
 
-    zones_rouge  = {a['zone'] for a in alertes if a['niveau'] == 'ROUGE'}
-    zones_orange = {a['zone'] for a in alertes if a['niveau'] == 'ORANGE'}
-    nb_rouge  = len(zones_rouge)
-    nb_orange = len(zones_orange)
-    # Les zones VERT ne sont pas stockées dans HBase — on les déduit
-    nb_vert   = len(set(ZONES_SENEGAL) - zones_rouge - zones_orange)
+    # Statut le plus récent par zone (tri sur timestamp)
+    dernier_par_zone = {}
+    for a in alertes:
+        zone = a['zone']
+        if zone not in dernier_par_zone or a['timestamp'] > dernier_par_zone[zone]['timestamp']:
+            dernier_par_zone[zone] = a
+
+    nb_rouge  = sum(1 for a in dernier_par_zone.values() if a['niveau'] == 'ROUGE')
+    nb_orange = sum(1 for a in dernier_par_zone.values() if a['niveau'] == 'ORANGE')
+    nb_vert   = len(set(ZONES_SENEGAL) - set(dernier_par_zone))  # zones sans alerte = VERT
 
     zones_data = []
     for zone in ZONES_SENEGAL:
         count  = compteur_zones.get(zone, 0)
-        niveau = next((a['niveau'] for a in alertes if a['zone'] == zone), 'VERT')
+        niveau = dernier_par_zone[zone]['niveau'] if zone in dernier_par_zone else 'VERT'
         zones_data.append({'zone': zone, 'count': count, 'niveau': niveau})
 
     return render_template(
