@@ -106,6 +106,8 @@ conso_df = (
    .format("kafka")
    .option("kafka.bootstrap.servers", BROKERS)
    .option("subscribe", "watt_conso_raw")
+   .option("failOnDataLoss", "false")
+   .option("startingOffsets", "latest")
    .load()
    .select(
        from_json(
@@ -169,6 +171,8 @@ solaire_df = (
    .format("kafka")
    .option("kafka.bootstrap.servers", BROKERS)
    .option("subscribe", "watt_solaire_raw")
+   .option("failOnDataLoss", "false")
+   .option("startingOffsets", "latest")
    .load()
    .select(
        from_json(

@@ -1,62 +1,237 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="fr">
 <head>
-
-<title>Watt-SN Dashboard</title>
-
-<link
-rel="stylesheet"
-href="{{ url_for('static', filename='style.css') }}"
->
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Watt-SN — Surveillance Énergétique</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </head>
-
 <body>
 
-<div class="header">
+  <!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="logo" aria-hidden="true">⚡</div>
+        <div>
+          <h1 class="header-title">Watt-SN</h1>
+          <p class="header-sub">Surveillance énergétique nationale du Sénégal</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="live-badge"><span class="dot"></span>Pipeline actif</span>
+        <span class="timestamp">{{ timestamp }}</span>
+      </div>
+    </div>
+  </header>
 
-<h1>⚡ Watt-SN</h1>
+  <!-- ══ MAIN ════════════════════════════════════════════════════════════ -->
+  <main class="main">
 
-<h2>Surveillance énergétique nationale</h2>
+    <!-- Métriques -->
+    <section class="metrics" aria-label="Métriques globales">
+      <div class="metric">
+        <span class="metric-label">Alertes totales</span>
+        <span class="metric-value">{{ total_alertes }}</span>
+        <span class="metric-sub">batches Spark traités</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label rouge-text">Zones ROUGE</span>
+        <span class="metric-value rouge-text">{{ nb_rouge }}</span>
+        <span class="metric-sub">Délestage imminent</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label orange-text">Zones ORANGE</span>
+        <span class="metric-value orange-text">{{ nb_orange }}</span>
+        <span class="metric-sub">Surveillance renforcée</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label vert-text">Zones VERT</span>
+        <span class="metric-value vert-text">{{ nb_vert }}</span>
+        <span class="metric-sub">Système stable</span>
+      </div>
+    </section>
 
-</div>
+    <!-- Graphiques -->
+    <section class="grid-2" aria-label="Graphiques">
 
-<div class="card">
+      <div class="card">
+        <h2 class="card-title">Alertes par zone</h2>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-dot" style="background:#C62828"></span>ROUGE</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#E65100"></span>ORANGE</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#2E7D32"></span>VERT</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chartZones"
+            role="img"
+            aria-label="Graphique en barres du nombre d'alertes par zone du Sénégal">
+            {% for z in zones %}{{ z.zone }}: {{ z.count }} alertes ({{ z.niveau }}){% if not loop.last %}, {% endif %}{% endfor %}
+          </canvas>
+        </div>
+      </div>
 
-<h3>Alertes par zone</h3>
+      <div class="card">
+        <h2 class="card-title">Répartition des niveaux</h2>
+        <div class="legend-row">
+          <span class="legend-item">
+            <span class="legend-dot" style="background:#C62828"></span>
+            ROUGE {{ risques.ROUGE | default(0) }}
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot" style="background:#E65100"></span>
+            ORANGE {{ risques.ORANGE | default(0) }}
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot" style="background:#2E7D32"></span>
+            VERT {{ risques.VERT | default(0) }}
+          </span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chartRisques"
+            role="img"
+            aria-label="Graphique en anneau de la répartition des niveaux de risque de délestage">
+            ROUGE: {{ risques.ROUGE | default(0) }},
+            ORANGE: {{ risques.ORANGE | default(0) }},
+            VERT: {{ risques.VERT | default(0) }}
+          </canvas>
+        </div>
+      </div>
 
-<ul>
-{% for zone,val in zones.items() %}
-<li>{{ zone }} : {{ val }}</li>
-{% endfor %}
-</ul>
+    </section>
 
-</div>
+    <!-- Zones + Recommandations -->
+    <section class="grid-2" aria-label="État des zones et recommandations">
 
-<div class="card">
+      <div class="card">
+        <h2 class="card-title">État des zones en temps réel</h2>
+        {% set max_count = zones | map(attribute='count') | max %}
+        <div class="zone-list">
+          {% for z in zones %}
+          <div class="zone-row">
+            <span class="zone-name">{{ z.zone | replace('_', ' ') }}</span>
+            <div class="zone-bar-wrap">
+              <div class="zone-bar zone-bar-{{ z.niveau | lower }}"
+                   data-width="{{ (z.count / max_count * 100) | int if max_count > 0 else 0 }}">
+              </div>
+            </div>
+            <span class="badge badge-{{ z.niveau | lower }}">{{ z.niveau }}</span>
+            <span class="zone-count">{{ z.count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
 
-<h3>Risques de délestage</h3>
+      <div class="card">
+        <h2 class="card-title">Recommandations de délestage</h2>
+        <div class="reco-list">
+          {% if recommandations %}
+            {% for r in recommandations %}
+            <div class="reco-item">
+              <div class="reco-icon reco-{{ r.niveau | lower }}">
+                {% if r.niveau == 'ROUGE' %}⛔{% else %}⚠️{% endif %}
+              </div>
+              <div class="reco-content">
+                <span class="reco-zone reco-zone-{{ r.niveau | lower }}">
+                  #{{ r.priorite }} — {{ r.zone | replace('_', ' ') }}
+                </span>
+                <span class="reco-action">{{ r.action }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="reco-empty">
+              <span>✅</span>
+              <p>Aucune action requise — système stable</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
 
-<ul>
-{% for risque,val in risques.items() %}
-<li>{{ risque }} : {{ val }}</li>
-{% endfor %}
-</ul>
+    </section>
 
-</div>
+    <!-- Footer -->
+    <footer class="footer">
+      <p>⚡ Watt-SN — Équipe 06 | Master 2 DSGL | Université Alioune Diop de Bambey 2025-2026</p>
+      <p>Pipeline : Apache Kafka → Spark Structured Streaming → HBase → Airflow</p>
+    </footer>
 
-<div class="card">
+  </main>
 
-<h3>Recommandations</h3>
+  <!-- ══ SCRIPTS ════════════════════════════════════════════════════════ -->
+  <script>
+    document.querySelectorAll('.zone-bar[data-width]').forEach(el => {
+      el.style.width = `${el.dataset.width}%`;
+    });
 
-<ul>
-{% for r in recommandations %}
-<li>{{ r }}</li>
-{% endfor %}
-</ul>
+    const zonesData = {{ zones | tojson }};
+    const risquesData = {{ risques | tojson }};
+    const couleurs = { ROUGE: '#C62828', ORANGE: '#E65100', VERT: '#2E7D32' };
 
-</div>
+    // Graphique barres — alertes par zone
+    new Chart(document.getElementById('chartZones'), {
+      type: 'bar',
+      data: {
+        labels: zonesData.map(z => z.zone.replace('_', ' ')),
+        datasets: [{
+          label: 'Alertes',
+          data: zonesData.map(z => z.count),
+          backgroundColor: zonesData.map(z => couleurs[z.niveau]),
+          borderRadius: 5,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => `${c.raw} alertes` } }
+        },
+        scales: {
+          x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 30 }, grid: { display: false } },
+          y: { ticks: { font: { size: 11 } }, grid: { color: 'rgba(128,128,128,0.1)' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // Graphique donut — répartition niveaux
+    const total = (risquesData.ROUGE || 0) + (risquesData.ORANGE || 0) + (risquesData.VERT || 0);
+    new Chart(document.getElementById('chartRisques'), {
+      type: 'doughnut',
+      data: {
+        labels: ['ROUGE', 'ORANGE', 'VERT'],
+        datasets: [{
+          data: [
+            risquesData.ROUGE  || 0,
+            risquesData.ORANGE || 0,
+            risquesData.VERT   || 0,
+          ],
+          backgroundColor: ['#C62828', '#E65100', '#2E7D32'],
+          borderWidth: 3,
+          borderColor: '#fff',
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => {
+                const pct = total > 0 ? Math.round(c.raw / total * 100) : 0;
+                return `${c.label} : ${c.raw} (${pct}%)`;
+              }
+            }
+          }
+        },
+        cutout: '62%',
+      }
+    });
+  </script>
 
 </body>
 </html>
