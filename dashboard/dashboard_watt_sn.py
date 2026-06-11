@@ -110,16 +110,24 @@ def dashboard():
     compteur_risques = Counter([a['niveau'] for a in alertes])
     recommandations  = generer_recommandations(alertes)
 
-    # Statut le plus récent par zone (tri sur timestamp)
+    # Statut le plus récent par zone ; à timestamp égal, la sévérité la plus haute gagne
+    SEVERITE = {'ROUGE': 3, 'ORANGE': 2, 'VERT': 1}
+
     dernier_par_zone = {}
     for a in alertes:
         zone = a['zone']
-        if zone not in dernier_par_zone or a['timestamp'] > dernier_par_zone[zone]['timestamp']:
+        if zone not in dernier_par_zone:
             dernier_par_zone[zone] = a
+        else:
+            cur = dernier_par_zone[zone]
+            if a['timestamp'] > cur['timestamp']:
+                dernier_par_zone[zone] = a
+            elif a['timestamp'] == cur['timestamp'] and SEVERITE.get(a['niveau'], 0) > SEVERITE.get(cur['niveau'], 0):
+                dernier_par_zone[zone] = a
 
     nb_rouge  = sum(1 for a in dernier_par_zone.values() if a['niveau'] == 'ROUGE')
     nb_orange = sum(1 for a in dernier_par_zone.values() if a['niveau'] == 'ORANGE')
-    nb_vert   = len(set(ZONES_SENEGAL) - set(dernier_par_zone))  # zones sans alerte = VERT
+    nb_vert   = len(set(ZONES_SENEGAL) - set(dernier_par_zone))
 
     zones_data = []
     for zone in ZONES_SENEGAL:
