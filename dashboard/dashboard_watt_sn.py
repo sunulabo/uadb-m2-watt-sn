@@ -110,9 +110,12 @@ def dashboard():
     compteur_risques = Counter([a['niveau'] for a in alertes])
     recommandations  = generer_recommandations(alertes)
 
-    nb_rouge  = len({a['zone'] for a in alertes if a['niveau'] == 'ROUGE'})
-    nb_orange = len({a['zone'] for a in alertes if a['niveau'] == 'ORANGE'})
-    nb_vert   = len({a['zone'] for a in alertes if a['niveau'] == 'VERT'})
+    zones_rouge  = {a['zone'] for a in alertes if a['niveau'] == 'ROUGE'}
+    zones_orange = {a['zone'] for a in alertes if a['niveau'] == 'ORANGE'}
+    nb_rouge  = len(zones_rouge)
+    nb_orange = len(zones_orange)
+    # Les zones VERT ne sont pas stockées dans HBase — on les déduit
+    nb_vert   = len(set(ZONES_SENEGAL) - zones_rouge - zones_orange)
 
     zones_data = []
     for zone in ZONES_SENEGAL:
