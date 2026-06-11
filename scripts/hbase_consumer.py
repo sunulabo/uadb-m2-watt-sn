@@ -69,8 +69,8 @@ def main():
         value_deserializer=lambda v: json.loads(v.decode('utf-8')),
     )
     consumer.assign([tp])
-    consumer.seek_to_beginning(tp)
-    print("🚀 Pipeline Kafka → HBase démarré (lecture depuis le début)...")
+    consumer.seek_to_end(tp)
+    print("🚀 Pipeline Kafka → HBase démarré (lecture des nouveaux messages)...")
     for message in consumer:
         try:
             record = message.value
