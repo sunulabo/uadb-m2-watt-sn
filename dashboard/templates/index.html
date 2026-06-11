@@ -77,15 +77,15 @@
         <div class="legend-row">
           <span class="legend-item">
             <span class="legend-dot" style="background:#C62828"></span>
-            ROUGE {{ risques.ROUGE | default(0) }}
+            ROUGE {{ nb_rouge }} zone{{ 's' if nb_rouge != 1 }}
           </span>
           <span class="legend-item">
             <span class="legend-dot" style="background:#E65100"></span>
-            ORANGE {{ risques.ORANGE | default(0) }}
+            ORANGE {{ nb_orange }} zone{{ 's' if nb_orange != 1 }}
           </span>
           <span class="legend-item">
             <span class="legend-dot" style="background:#2E7D32"></span>
-            VERT {{ risques.VERT | default(0) }}
+            VERT {{ nb_vert }} zone{{ 's' if nb_vert != 1 }}
           </span>
         </div>
         <div class="chart-wrap">
@@ -197,16 +197,17 @@
     });
 
     // Graphique donut — répartition niveaux
-    const total = (risquesData.ROUGE || 0) + (risquesData.ORANGE || 0) + (risquesData.VERT || 0);
+    const zonesParNiveau = { ROUGE: {{ nb_rouge }}, ORANGE: {{ nb_orange }}, VERT: {{ nb_vert }} };
+    const total = zonesParNiveau.ROUGE + zonesParNiveau.ORANGE + zonesParNiveau.VERT;
     new Chart(document.getElementById('chartRisques'), {
       type: 'doughnut',
       data: {
         labels: ['ROUGE', 'ORANGE', 'VERT'],
         datasets: [{
           data: [
-            risquesData.ROUGE  || 0,
-            risquesData.ORANGE || 0,
-            risquesData.VERT   || 0,
+            zonesParNiveau.ROUGE,
+            zonesParNiveau.ORANGE,
+            zonesParNiveau.VERT,
           ],
           backgroundColor: ['#C62828', '#E65100', '#2E7D32'],
           borderWidth: 3,
@@ -223,7 +224,7 @@
             callbacks: {
               label: c => {
                 const pct = total > 0 ? Math.round(c.raw / total * 100) : 0;
-                return `${c.label} : ${c.raw} (${pct}%)`;
+                return `${c.label} : ${c.raw} zone${c.raw !== 1 ? 's' : ''} (${pct}%)`;
               }
             }
           }
