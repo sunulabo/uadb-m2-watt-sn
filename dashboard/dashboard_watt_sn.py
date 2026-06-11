@@ -42,6 +42,8 @@ def charger_alertes():
 
         for key, data in table.scan():
             zone    = data.get(b'info:zone',    b'INCONNU').decode()
+            if zone not in ZONES_SENEGAL:
+                continue  # ignore les zones corrompues ou inconnues
             niveau  = data.get(b'info:niveau',  b'VERT').decode()
             valeur  = data.get(b'alerte:valeur', b'0').decode()
             ts      = data.get(b'info:timestamp', b'').decode()

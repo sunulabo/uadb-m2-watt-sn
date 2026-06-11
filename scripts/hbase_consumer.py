@@ -16,12 +16,15 @@ HBASE_HOST    = os.environ.get('HBASE_HOST',   'localhost')
 HBASE_PORT    = int(os.environ.get('HBASE_PORT', '9090'))
 TOPIC         = 'watt_alerts'
 WRITE_DELAY_S = float(os.environ.get('WRITE_DELAY_S', '0.05'))  # 50 ms entre chaque écriture
+ZONES_VALIDES = {'DAKAR_NORD', 'DAKAR_SUD', 'THIES', 'SAINT_LOUIS', 'ZIGUINCHOR', 'KAOLACK', 'TAMBACOUNDA'}
 
 def ecrire_hbase(table, record):
     """Écrit une alerte dans HBase."""
     zone    = record.get('zone', 'INCONNU')
     niveau  = record.get('risque_delestage', 'VERT')
 
+    if zone not in ZONES_VALIDES:
+        return  # ignore les zones inconnues ou corrompues
     if niveau == 'VERT':
         return  # On ne stocke pas les alertes vertes
 
