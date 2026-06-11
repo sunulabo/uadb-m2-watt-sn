@@ -9,9 +9,10 @@ import happybase
 from kafka import KafkaConsumer
 from datetime import datetime
 
-KAFKA_BROKER = 'localhost:9092'
-HBASE_HOST   = 'localhost'
-HBASE_PORT   = 9090
+import os
+KAFKA_BROKER = os.environ.get('KAFKA_BROKER', 'localhost:9092')
+HBASE_HOST   = os.environ.get('HBASE_HOST',   'localhost')
+HBASE_PORT   = int(os.environ.get('HBASE_PORT', '9090'))
 TOPIC        = 'watt_alerts'
 
 def ecrire_hbase(table, record):
@@ -22,7 +23,11 @@ def ecrire_hbase(table, record):
     if niveau == 'VERT':
         return  # On ne stocke pas les alertes vertes
 
-    ts      = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    window  = record.get('window', {})
+    ts      = window.get('start', datetime.utcnow().isoformat())
+    if hasattr(ts, 'isoformat'):
+        ts = ts.isoformat()
+    ts = str(ts).replace(' ', 'T')[:19]
     row_key = f"{zone}#{ts}#{niveau}".encode()
     seuil   = 10000.0 if niveau == 'ROUGE' else 5000.0
 
@@ -50,16 +55,16 @@ def main():
     table = connection.table('watt:alertes')
     print("✅ HBase connecté")
 
-    print(f"📡 Écoute Kafka topic '{TOPIC}'...")
+    print(f"📡 Connexion Kafka {KAFKA_BROKER} topic '{TOPIC}'...")
+    from kafka import TopicPartition
+    tp = TopicPartition(TOPIC, 0)
     consumer = KafkaConsumer(
-        TOPIC,
         bootstrap_servers=[KAFKA_BROKER],
         value_deserializer=lambda v: json.loads(v.decode('utf-8')),
-        auto_offset_reset='latest',
-        group_id='watt-hbase-writer'
     )
-
-    print("🚀 Pipeline Kafka → HBase démarré...")
+    consumer.assign([tp])
+    consumer.seek_to_beginning(tp)
+    print("🚀 Pipeline Kafka → HBase démarré (lecture depuis le début)...")
     for message in consumer:
         try:
             record = message.value
