@@ -197,10 +197,10 @@ solaire_df = (
 
 conso_agg = (
    conso_df
-   .withWatermark(
-       "event_ts",
-       "10 minutes"
-   )
+#    .withWatermark(
+#        "event_ts",
+#        "10 minutes"
+#    )
    .groupBy(
        window(
            "event_ts",
@@ -289,14 +289,13 @@ risque_df = (
 # ==========================================================
 
 
-alertes_kafka = (
-   risque_df
-   .select(
-       to_json(
-           struct("*")
-       ).alias("value")
-   )
-)
+# alertes_kafka = (
+#     risque_df
+#     .filter(col("risque_delestage").isin(["ROUGE", "ORANGE"]))
+#     .select(
+#         to_json(struct("*")).alias("value")
+#     )
+# )
 
 
 debug_query = (
@@ -307,25 +306,32 @@ debug_query = (
 )
 
 
+def write_to_kafka(batch_df, batch_id):
+    from kafka import KafkaProducer
+    import json
+    if batch_df.count() == 0:
+        return
+    producer = KafkaProducer(
+        bootstrap_servers=["kafka:29092"],
+        value_serializer=lambda v: json.dumps(v, default=str).encode("utf-8")
+    )
+    rows = batch_df.filter(
+        col("risque_delestage").isin(["ROUGE", "ORANGE"])
+    ).collect()
+    for row in rows:
+        producer.send("watt_alerts", row.asDict(recursive=True))
+    producer.flush()
+    print(f"✅ Batch {batch_id} — {len(rows)} alertes envoyées dans Kafka")
+
 q_alerts = (
-   alertes_kafka
-   .writeStream
-   .format("kafka")
-   .option(
-       "kafka.bootstrap.servers",
-       BROKERS
-   )
-   .option(
-       "topic",
-       "watt_alerts"
-   )
-   .option(
-       "checkpointLocation",
-       "/tmp/watt_alerts_ckpt"
-   )
-   .outputMode("update")
-   .start()
+    risque_df
+    .writeStream
+    .foreachBatch(write_to_kafka)
+    .option("checkpointLocation", "/tmp/watt_alerts_ckpt")
+    .outputMode("update")
+    .start()
 )
+
 q_debug_solaire = (
    solaire_agg
    .writeStream

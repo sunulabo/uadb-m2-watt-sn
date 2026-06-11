@@ -55,8 +55,8 @@ def charger_alertes():
         connection.close()
         return alertes
 
-    except Exception:
-        # Données simulées pour la démonstration
+    except Exception as e:
+        print(f"[WARN] HBase indisponible ({e}) — données simulées")
         return [
             {'zone': 'DAKAR_NORD',  'niveau': 'ROUGE',  'valeur': 12500.0, 'timestamp': datetime.utcnow().isoformat()},
             {'zone': 'DAKAR_NORD',  'niveau': 'ROUGE',  'valeur': 11800.0, 'timestamp': datetime.utcnow().isoformat()},
