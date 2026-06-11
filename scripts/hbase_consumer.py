@@ -5,15 +5,17 @@ Lit les alertes depuis watt_alerts et les écrit dans HBase
 """
 
 import json
+import time
 import happybase
 from kafka import KafkaConsumer
 from datetime import datetime
 
 import os
-KAFKA_BROKER = os.environ.get('KAFKA_BROKER', 'localhost:9092')
-HBASE_HOST   = os.environ.get('HBASE_HOST',   'localhost')
-HBASE_PORT   = int(os.environ.get('HBASE_PORT', '9090'))
-TOPIC        = 'watt_alerts'
+KAFKA_BROKER  = os.environ.get('KAFKA_BROKER', 'localhost:9092')
+HBASE_HOST    = os.environ.get('HBASE_HOST',   'localhost')
+HBASE_PORT    = int(os.environ.get('HBASE_PORT', '9090'))
+TOPIC         = 'watt_alerts'
+WRITE_DELAY_S = float(os.environ.get('WRITE_DELAY_S', '0.05'))  # 50 ms entre chaque écriture
 
 def ecrire_hbase(table, record):
     """Écrit une alerte dans HBase."""
@@ -42,17 +44,21 @@ def ecrire_hbase(table, record):
         b'action:zone_cible': zone.encode(),
     })
     print(f"[HBase] ✅ Alerte {niveau} écrite — zone {zone}")
+    time.sleep(WRITE_DELAY_S)
 
-def main():
-    print("🔌 Connexion HBase...")
-    connection = happybase.Connection(
+def connect_hbase():
+    conn = happybase.Connection(
         host=HBASE_HOST,
         port=HBASE_PORT,
         timeout=10000,
         transport='buffered',
         protocol='binary',
     )
-    table = connection.table('watt:alertes')
+    return conn, conn.table('watt:alertes')
+
+def main():
+    print("🔌 Connexion HBase...")
+    connection, table = connect_hbase()
     print("✅ HBase connecté")
 
     print(f"📡 Connexion Kafka {KAFKA_BROKER} topic '{TOPIC}'...")
@@ -70,7 +76,14 @@ def main():
             record = message.value
             ecrire_hbase(table, record)
         except Exception as e:
-            print(f"[ERREUR] {e}")
+            print(f"[ERREUR] {e} — reconnexion HBase dans 3s...")
+            time.sleep(3)
+            try:
+                connection.close()
+            except Exception:
+                pass
+            connection, table = connect_hbase()
+            print("✅ HBase reconnecté")
 
 if __name__ == '__main__':
     main()
